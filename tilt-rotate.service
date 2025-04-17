@@ -1,0 +1,18 @@
+# ~/.config/systemd/user/tilt-rotate.service
+[Unit]
+Description=Rotate screen based on RP2040 tilt sensor
+After=graphical-session.target
+
+[Service]
+Type=simple
+# Ensure xrandr can connect to your X session
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=%h/.Xauthority
+# Point to the script placed alongside this service unit
+ExecStart=/usr/bin/python3 %h/.config/systemd/user/tilt_rotate.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+
