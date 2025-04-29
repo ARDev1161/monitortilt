@@ -1,18 +1,38 @@
-# ~/.config/systemd/user/tilt-rotate.service
 [Unit]
 Description=Rotate screen based on RP2040 tilt sensor
-After=graphical-session.target
+After=graphical-session.target ksmserver.service
+Wants=graphical-session.target ksmserver.service
 
 [Service]
 Type=simple
-# Ensure xrandr can connect to your X session
+
+# ————— Environment —————
+# Serial device
+Environment=TILT_SERIAL_PORT=/dev/ttyACM0
+
+# GUI session
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=%h/.Xauthority
-# Point to the script placed alongside this service unit
-ExecStart=/usr/bin/python3 %h/.config/systemd/user/tilt_rotate.py
+Environment=WAYLAND_DISPLAY=wayland-0
+
+# D-Bus session for kscreen-doctor
+Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus
+
+# Force Qt → Wayland plugin
+Environment=QT_QPA_PLATFORM=wayland
+
+# ————— Wait-fors —————
+ExecStartPre=/usr/bin/sh -c 'while [ ! -e "${TILT_SERIAL_PORT}" ]; do sleep 0.2; done'
+ExecStartPre=/usr/bin/sh -c 'while [ ! -e /run/user/$(id -u)/bus ];   do sleep 0.2; done'
+
+# ————— Main command —————
+ExecStart=%h/.config/systemd/user/tilt_rotate.py
+
 Restart=always
 RestartSec=5
 
+StandardOutput=journal
+StandardError=journal
+
 [Install]
 WantedBy=default.target
-
